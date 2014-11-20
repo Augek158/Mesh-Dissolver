@@ -8,9 +8,9 @@
  
 class HelloWorld : public MPxCommand {
  public:
-  HelloWorld() {};
-  virtual MStatus doIt(const MArgList& argList);
-  virtual MStatus redoIt();
-  static void* creator();
+   HelloWorld() {};
+   virtual MStatus doIt(const MArgList& argList);
+   virtual MStatus redoIt();
+   static void* creator();
 };
 #endif
