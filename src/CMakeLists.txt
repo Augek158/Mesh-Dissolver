@@ -24,6 +24,6 @@ endif (APPLE)
 # The libraries for linking.
 set(LIBS libOpenMaya.${LIB_EXT} libFoundation.${LIB_EXT})	
 
-add_executable(HelloWorld.${BIN_EXT} HelloWorld.cpp)
-target_link_libraries(HelloWorld.${BIN_EXT} ${LIBS})
+add_executable(MeshDissolver.${BIN_EXT} MeshDissolver.cpp)
+target_link_libraries(MeshDissolver.${BIN_EXT} ${LIBS})
 
