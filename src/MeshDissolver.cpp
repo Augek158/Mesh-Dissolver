@@ -1,6 +1,3 @@
-#define NT_PLUGIN
-#define REQUIRE_IOSTREAM
-
 #include "MeshDissolver.h"
 
 #include <maya/MFnPlugin.h>

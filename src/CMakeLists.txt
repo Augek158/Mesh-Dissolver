@@ -48,6 +48,11 @@ if (WIN32)
 	# Set up the directories.
 	include_directories(${MeshDissolver_SOURCE_DIR}/include : ${MAYA_INCLUDE_PATH})
 	link_directories(${MAYA_LIBRARY_PATH})	
+	
+	add_definitions(
+		"/D \"NT_PLUGIN\""
+		"/D \"REQUIRE_IOSTREAM\""
+	)	
 
 	add_library( MeshDissolver SHARED ${SOURCES} )
 
