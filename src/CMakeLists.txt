@@ -18,9 +18,21 @@ if (APPLE)
 
 	# Compiler flags
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DREQUIRE_IOSTREAM -include '${MAYA_INCLUDE_PATH}/maya/OpenMayaMac.h' ")
+	
+	add_executable(MeshDissolver.${BIN_EXT} MeshDissolver.cpp)
+	
+	# The libraries for linking.
+	set(LIBS libOpenMaya.${LIB_EXT} libFoundation.${LIB_EXT})
+
+	# Add header file
+	target_link_libraries(MeshDissolver.${BIN_EXT} ${LIBS})
 
 endif (APPLE)
 if (WIN32)
+	set(SOURCES
+   	"C:/Users/Ramin Assadi/Desktop/Mesh-Dissolver/src/MeshDissolver.cpp"
+	)
+
 	# Path to the maya includes.
 	set(MAYA_INCLUDE_PATH "C:/Program Files/Autodesk/Maya2015/include")
 
@@ -35,14 +47,21 @@ if (WIN32)
 
 	# Set up the directories.
 	include_directories(${MeshDissolver_SOURCE_DIR}/include : ${MAYA_INCLUDE_PATH})
-	link_directories(${MAYA_LIBRARY_PATH})
+	link_directories(${MAYA_LIBRARY_PATH})	
+
+	add_library( MeshDissolver SHARED ${SOURCES} )
+
+	set_target_properties( MeshDissolver PROPERTIES SUFFIX ".mll" LINK_FLAGS 
+				"/dll /export:initializePlugin /export:uninitializePlugin" )	
 	
-		
+	# The libraries for linking.
+	set(LIBS OpenMaya.${LIB_EXT} Foundation.${LIB_EXT})
+	
+	# Add header file
+	target_link_libraries(MeshDissolver ${LIBS})
 endif (WIN32)
 
-# The libraries for linking.
-set(LIBS OpenMaya.${LIB_EXT} Foundation.${LIB_EXT})	
+	
 
-add_executable(MeshDissolver.${BIN_EXT} MeshDissolver.cpp)
-target_link_libraries(MeshDissolver.${BIN_EXT} ${LIBS})
+
 
