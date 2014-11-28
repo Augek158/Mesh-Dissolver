@@ -1,14 +1,8 @@
+#define NT_PLUGIN
+#define REQUIRE_IOSTREAM
+
 #include "HelloWorld.h"
 
-#include <maya/MFnPlugin.h>
-#include <maya/MString.h>
-#include <maya/MArgList.h>
-#include <maya/MSelectionList.h>
-#include <maya/MItSelectionList.h>
-#include <maya/MPoint.h>
-#include <maya/MVector.h>
-#include <maya/MDagPath.h>
- 
 void* HelloWorld::creator() { return new HelloWorld; }
  
 MStatus HelloWorld::doIt(const MArgList& argList) {
@@ -28,7 +22,6 @@ MStatus HelloWorld::doIt(const MArgList& argList) {
             iter.getDagPath(mdagPath, mComponent);
         }
     }
-
 
     redoIt();
 
