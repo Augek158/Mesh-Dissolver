@@ -1,45 +1,43 @@
 #include "MeshDissolver.h"
-
 #include <maya/MFnPlugin.h>
-#include <maya/MString.h>
 #include <maya/MArgList.h>
 #include <maya/MSelectionList.h>
 #include <maya/MItSelectionList.h>
-#include <maya/MItMeshVertex.h>
-#include <maya/MPoint.h>
-#include <maya/MVector.h>
+#include <maya/MItMeshPolygon.h>
 #include <maya/MDagPath.h>
+#include <maya/MGlobal.h>
  
 void* MeshDissolver::creator() { return new MeshDissolver; }
  
 MStatus MeshDissolver::doIt(const MArgList& argList) {
 
-    MVector vector( 1.0, 0.0, 0.0 );
-    MStatus stat;
+    MStatus stat; 
     MSelectionList selection;
+    char msg[100];
+
     MGlobal::getActiveSelectionList(selection);
-    MItSelectionList iter(selection, MFn::kInvalid, &stat );
-
+    
     if (MS::kSuccess == stat) {
-        MDagPath mdagPath; 
-        MObject mComponent; 
+        MDagPath mdagPath;
+        MObject face;
         
-        for (; !iter.isDone(); iter.next()) {
-            iter.getDagPath(mdagPath, mComponent);
+        // Get DagPath of the first object.
+        selection.getDagPath(0, mdagPath);
 
-            MItMeshVertex vtxFn( mdagPath, mComponent, &stat );
-            if ( MS::kSuccess == stat ) { // Vertex iterator successfully initalized.
-                for ( ; !vtxFn.isDone(); vtxFn.next() ) {
-                     if ( MS::kFailure == vtxFn.translateBy( vector ) ) {
-                         cerr << "Error setting Vertex\n";
-                     }
-                 }
-                 vtxFn.updateSurface();
-            } 
+        // Create iterator.
+        MItMeshPolygon faceIter(mdagPath);
+
+            // Iterates through all faces of the polygon.
+            for(; !faceIter.isDone(); faceIter.next()) {
+                face = faceIter.currentItem();
+
+                // Replace current selection with 'face'.
+                MGlobal::select(mdagPath, face, MGlobal::kReplaceList);
+
+                // Execute MEL command to extract face.
+                MGlobal::executeCommand("ExtractFace");
+            }     
         }
-    } else {
-        cerr << "Failed to create selection iterator." << endl;
-    }
 
     return MS::kSuccess;
 }
