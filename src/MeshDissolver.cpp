@@ -6,6 +6,8 @@
 #include <maya/MItMeshPolygon.h>
 #include <maya/MDagPath.h>
 #include <maya/MGlobal.h>
+#include <maya/MFnMesh.h>
+#include <vector>
  
 void* MeshDissolver::creator() { return new MeshDissolver; }
  
@@ -19,25 +21,57 @@ MStatus MeshDissolver::doIt(const MArgList& argList) {
     
     if (MS::kSuccess == stat) {
         MDagPath mdagPath;
-        MObject face;
-        
+        MObject mObject;
+
         // Get DagPath of the first object.
         selection.getDagPath(0, mdagPath);
 
-        // Create iterator.
+        MPointArray ptArray;
+        MFloatPointArray fPtArray;
+
+        // TODO: Should be able to handle [3][4] as well.
+        double dblPts[4][4];
+
+        // Create iterator
         MItMeshPolygon faceIter(mdagPath);
 
-            // Iterates through all faces of the polygon.
-            for(; !faceIter.isDone(); faceIter.next()) {
-                face = faceIter.currentItem();
+        // TODO: Should be able to handle [3][4] as well.
+        int arr[] = {0, 1, 2, 3};
+        MIntArray indices = MIntArray(arr, 4);
 
-                // Replace current selection with 'face'.
-                MGlobal::select(mdagPath, face, MGlobal::kReplaceList);
+        std::vector<Face> vec;
 
-                // Execute MEL command to extract face.
-                MGlobal::executeCommand("ExtractFace");
-            }     
+        Face face;
+        for(; !faceIter.isDone(); faceIter.next()) {
+            face.numVertices = faceIter.polygonVertexCount();
+            face.numPolygons = 1;
+
+            // Get pointArray and cast it to MFloatPointArray.
+            faceIter.getPoints(ptArray);
+            ptArray.get(dblPts);
+            face.vertexArray = MFloatPointArray(dblPts, face.numVertices);
+
+            // Indices;
+            face.polygonConnects = indices;
+
+            // TODO: Should be able to handle [3][4] as well.
+            face.polygonCounts = MIntArray(1, 4);
+
+            faceIter.getUVs(face.uArray, face.vArray);
+
+            vec.push_back(face);
         }
+
+        MFnMesh surfFn(mdagPath);
+        for (std::vector<Face>::iterator it = vec.begin(); it != vec.end(); ++it) {
+            mObject = surfFn.create(it->numVertices, it->numPolygons, it->vertexArray, it->polygonCounts, it->polygonConnects, it->uArray, it->vArray, mdagPath.node());
+            MFnMesh objFn(mObject);
+            
+            // TODO: Get Normals!
+            MGlobal::displayInfo(mObject.apiTypeStr()); 
+        }
+  
+    }
 
     return MS::kSuccess;
 }

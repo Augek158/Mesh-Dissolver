@@ -3,6 +3,20 @@
  
 #include <maya/MArgList.h>
 #include <maya/MPxCommand.h>
+#include <maya/MFloatPointArray.h>
+#include <maya/MPointArray.h>
+#include <maya/MIntArray.h>
+#include <maya/MFloatArray.h>
+
+typedef struct Face {
+	int numVertices;
+	int numPolygons;
+	MFloatPointArray vertexArray;
+	MIntArray polygonCounts;
+	MIntArray polygonConnects;
+	MFloatArray uArray;
+	MFloatArray vArray;
+} Face;
 
 class MeshDissolver : public MPxCommand {
  public:
