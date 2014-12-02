@@ -8,7 +8,6 @@
 #include <maya/MPoint.h>
 #include <maya/MPointArray.h>
 #include <maya/MVector.h>
-#include <maya/MDagPath.h>
 #include <maya/MItMeshPolygon.h>
 #include <maya/MGlobal.h>
 
@@ -17,8 +16,6 @@
 #include <time.h>
  
 void* MeshDissolver::creator() { return new MeshDissolver; }
-void translateMesh(MVector vector, MDagPath mdagPath);
-void translateFace(MVector vector, MDagPath mdagPath);
  
 MStatus MeshDissolver::doIt(const MArgList& argList) {
 	
@@ -80,7 +77,7 @@ int main(int argc, char** argv) {
 }
 
 /// Translate each mesh with specific vector
-void translateMesh(MVector vector, MDagPath mdagPath) {
+void MeshDissolver::translateMesh(MVector vector, MDagPath mdagPath) {
 	MItMeshVertex vertexIter(mdagPath);
 	for (; !vertexIter.isDone(); vertexIter.next()) {
 		vertexIter.translateBy(vector);
@@ -88,7 +85,7 @@ void translateMesh(MVector vector, MDagPath mdagPath) {
 }
 
 /// Translate each face with specific vector
-void translateFace(MVector vector, MDagPath mdagPath) {
+void MeshDissolver::translateFace(MVector vector, MDagPath mdagPath) {
 	MItMeshPolygon faceIter(mdagPath);
 	for (; !faceIter.isDone(); faceIter.next()) {
 		MPointArray pointArray;
