@@ -1,12 +1,20 @@
 #include "MeshDissolver.h"
+
+// Maya includes
 #include <maya/MFnPlugin.h>
 #include <maya/MArgList.h>
 #include <maya/MSelectionList.h>
-#include <maya/MItSelectionList.h>
 #include <maya/MItMeshPolygon.h>
+#include <maya/MDagModifier.h>
 #include <maya/MDagPath.h>
 #include <maya/MGlobal.h>
+
+// Maya function Sets
+#include <maya/MFnDagNode.h>
 #include <maya/MFnMesh.h>
+#include <maya/MFnTransform.h>
+
+// std
 #include <vector>
  
 void* MeshDissolver::creator() { return new MeshDissolver; }
@@ -21,10 +29,17 @@ MStatus MeshDissolver::doIt(const MArgList& argList) {
     
     if (MS::kSuccess == stat) {
         MDagPath mdagPath;
-        MObject mObject;
+        MObject mObject, mTransform;
+
 
         // Get DagPath of the first object.
         selection.getDagPath(0, mdagPath);
+
+        // Get transform of the DagPath.
+        mTransform = mdagPath.transform(&stat);
+        checkStatus(stat);
+
+        // -------- Extract faces ----------//
 
         MPointArray ptArray;
         MFloatPointArray fPtArray;
@@ -39,6 +54,7 @@ MStatus MeshDissolver::doIt(const MArgList& argList) {
         int arr[] = {0, 1, 2, 3};
         MIntArray indices = MIntArray(arr, 4);
 
+        // Vector allocates on heap by default.
         std::vector<Face> vec;
 
         Face face;
@@ -57,23 +73,31 @@ MStatus MeshDissolver::doIt(const MArgList& argList) {
             // TODO: Should be able to handle [3][4] as well.
             face.polygonCounts = MIntArray(1, 4);
 
+            // Texture coordinates
             faceIter.getUVs(face.uArray, face.vArray);
 
             vec.push_back(face);
         }
 
-        MFnMesh surfFn(mdagPath);
+        MFnMesh surfFn;
+        
         for (std::vector<Face>::iterator it = vec.begin(); it != vec.end(); ++it) {
-            mObject = surfFn.create(it->numVertices, it->numPolygons, it->vertexArray, it->polygonCounts, it->polygonConnects, it->uArray, it->vArray, mdagPath.node());
-            MFnMesh objFn(mObject);
-            
-            // TODO: Get Normals!
-            MGlobal::displayInfo(mObject.apiTypeStr()); 
+            mObject = surfFn.create(it->numVertices, it->numPolygons, it->vertexArray, it->polygonCounts,
+                                    it->polygonConnects, it->uArray, it->vArray, mTransform);
         }
-  
+
+        // ------- Extract Faces End -------- //
     }
 
     return MS::kSuccess;
+}
+
+bool MeshDissolver::checkStatus (const MStatus& stat) { 
+    if (stat != MS::kSuccess) {
+        MGlobal::displayError(stat.errorString());
+        return false;
+    }
+    return true;
 }
 
 MStatus MeshDissolver::redoIt (){

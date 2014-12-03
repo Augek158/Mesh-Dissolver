@@ -24,6 +24,10 @@ class MeshDissolver : public MPxCommand {
    virtual MStatus doIt(const MArgList& argList);
    virtual MStatus redoIt();
    static void* creator();
+
+ private:
+ 	bool checkStatus(const MStatus& stat);
+
 };
 
 #endif // MESH_DISSOLVER_H
