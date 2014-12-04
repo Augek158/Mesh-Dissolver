@@ -15,14 +15,8 @@ MStatus uninitializePlugin(MObject obj) {
     return status;
 }
 
-// Apple LLVM version 6.0 (clang-600.0.54) (based on LLVM 3.5svn) 
-// won't initalize plugin with implicit entry point.
-#ifdef __APPLE__ 
-
 int main(int argc, char** argv) {
 
     if (argc != 2) return 0;
     return 0;
 }
-
-#endif // __APPLE__

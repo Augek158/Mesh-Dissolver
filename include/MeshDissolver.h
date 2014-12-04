@@ -25,11 +25,13 @@ class MeshDissolver : public MPxCommand {
    virtual MStatus redoIt();
    static void* creator();
 
+
  private:
  	FaceData* faceData;
  	bool checkStatus(const MStatus& stat);
  	bool collectFaceData(const MDagPath& mdagPath, FaceData* faceData); 
-
+	void translateMesh(MVector vector, MDagPath mdagPath);
+	void translateFace(MVector vector, MDagPath mdagPath);
 };
 
 #endif // MESH_DISSOLVER_H

@@ -2,20 +2,28 @@
 
 #include <maya/MArgList.h>
 #include <maya/MSelectionList.h>
-#include <maya/MItMeshPolygon.h>
 #include <maya/MGlobal.h>
 #include <maya/MFnMesh.h>
 
+#include <maya/MItMeshPolygon.h>
+#include <maya/MItMeshVertex.h>
+#include <maya/MItSelectionList.h>
+#include <maya/MVector.h>
+#include <maya/MGlobal.h>
+
+#include <time.h>
  
 void* MeshDissolver::creator() { return new MeshDissolver; }
  
 MStatus MeshDissolver::doIt(const MArgList& argList) {
+	
+	clock_t t = clock();
+    MStatus stat;
 
-    MStatus stat; 
+	// Get current selection
     MSelectionList selection;
-    char msg[100];
-
     MGlobal::getActiveSelectionList(selection);
+	MItSelectionList iter(selection, MFn::kInvalid, &stat);
     
     if (MS::kSuccess == stat) {
         MDagPath mdagPath;
@@ -43,9 +51,27 @@ MStatus MeshDissolver::doIt(const MArgList& argList) {
         MFnMesh surfFn;
         surfFn.create(faceData->numVertices, faceData->numPolygons, faceData->vertexArray,
                       faceData->polygonCounts, faceData->polygonConnects, mTransform);
-    }
+        /*
+        MDagPath mdagPath; 
+        MObject mComponent;
+		MVector vector = MVector(0.0, 30.0, 0.0);
 
-    return MS::kSuccess;
+        // Loop through each mesh
+        for (; !iter.isDone(); iter.next()) {
+            iter.getDagPath(mdagPath, mComponent);
+
+			translateMesh(vector, mdagPath);
+			//translateFace(vector, mdagPath);
+        }
+        */
+        
+    } 
+
+	// How long did the calculation take?
+	t = clock() - t;
+	cout << ((float)t) / CLOCKS_PER_SEC << endl;
+    
+	return MS::kSuccess;
 }
 
 /// Takes an MDagPath and a FaceData* as parameter. The function uses the mesh at the
@@ -102,10 +128,34 @@ bool MeshDissolver::checkStatus (const MStatus& stat) {
 MStatus MeshDissolver::redoIt (){
 
     // Do actual work here with the data from local class.
-    
     return MS::kSuccess;
 }
 
 MeshDissolver::~MeshDissolver() {
     delete faceData;
+}
+
+
+/// Translate each mesh with specific vector
+void MeshDissolver::translateMesh(MVector vector, MDagPath mdagPath) {
+	MItMeshVertex vertexIter(mdagPath);
+	for (; !vertexIter.isDone(); vertexIter.next()) {
+		vertexIter.translateBy(vector);
+	}
+}
+
+/// Translate each face with specific vector
+void MeshDissolver::translateFace(MVector vector, MDagPath mdagPath) {
+	MItMeshPolygon faceIter(mdagPath);
+	for (; !faceIter.isDone(); faceIter.next()) {
+		MPointArray pointArray;
+		faceIter.getPoints(pointArray);
+		for (unsigned int i = 0; i < pointArray.length(); i++) {
+			pointArray[i].x += vector.x;
+			pointArray[i].y += vector.y;
+			pointArray[i].z += vector.z;
+		}
+		faceIter.setPoints(pointArray);
+		faceIter.updateSurface();
+	}
 }
