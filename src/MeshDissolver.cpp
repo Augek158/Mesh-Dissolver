@@ -12,6 +12,10 @@
 #include <maya/MGlobal.h>
 
 #include <time.h>
+
+MeshDissolver::MeshDissolver() {
+    faceData = NULL; 
+}
  
 void* MeshDissolver::creator() { return new MeshDissolver; }
  
@@ -52,19 +56,16 @@ MStatus MeshDissolver::doIt(const MArgList& argList) {
         surfFn.create(faceData->numVertices, faceData->numPolygons, faceData->vertexArray,
                       faceData->polygonCounts, faceData->polygonConnects, mTransform);
         /*
-        MDagPath mdagPath; 
-        MObject mComponent;
 		MVector vector = MVector(0.0, 30.0, 0.0);
 
         // Loop through each mesh
         for (; !iter.isDone(); iter.next()) {
-            iter.getDagPath(mdagPath, mComponent);
+            iter.getDagPath(mdagPath, mObject);
 
 			translateMesh(vector, mdagPath);
 			//translateFace(vector, mdagPath);
         }
         */
-        
     } 
 
 	// How long did the calculation take?
@@ -117,6 +118,7 @@ bool MeshDissolver::collectFaceData(const MDagPath& mdagPath, FaceData* faceData
 
     return true;
 }
+
 bool MeshDissolver::checkStatus (const MStatus& stat) { 
     if (stat != MS::kSuccess) {
         MGlobal::displayError(stat.errorString());
@@ -132,7 +134,9 @@ MStatus MeshDissolver::redoIt (){
 }
 
 MeshDissolver::~MeshDissolver() {
-    delete faceData;
+    if (faceData != NULL) {
+        delete faceData;    
+    }
 }
 
 

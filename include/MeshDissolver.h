@@ -18,15 +18,14 @@ typedef struct FaceData {
 } FaceData;
 
 class MeshDissolver : public MPxCommand {
- public:
-   MeshDissolver() {};
-   ~MeshDissolver();
-   virtual MStatus doIt(const MArgList& argList);
-   virtual MStatus redoIt();
-   static void* creator();
-
-
- private:
+  public:
+    MeshDissolver();
+    ~MeshDissolver();
+    virtual MStatus doIt(const MArgList& argList);
+    virtual MStatus redoIt();
+    static void* creator();
+   
+  private:
  	FaceData* faceData;
  	bool checkStatus(const MStatus& stat);
  	bool collectFaceData(const MDagPath& mdagPath, FaceData* faceData); 
