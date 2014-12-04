@@ -60,7 +60,7 @@ if (WIN32)
 				"/dll /export:initializePlugin /export:uninitializePlugin" )	
 	
 	# The libraries for linking.
-	set(LIBS OpenMaya.${LIB_EXT} Foundation.${LIB_EXT})
+	set(LIBS OpenMaya.${LIB_EXT} Foundation.${LIB_EXT} OpenMayaAnim.${LIB_EXT} OpenMayaUI.${LIB_EXT})
 	
 	# Add header file
 	target_link_libraries(MeshDissolver ${LIBS})
