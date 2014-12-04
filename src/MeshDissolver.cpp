@@ -1,17 +1,10 @@
 #include "MeshDissolver.h"
 
-// Maya includes
-#include <maya/MFnPlugin.h>
 #include <maya/MArgList.h>
 #include <maya/MSelectionList.h>
 #include <maya/MItMeshPolygon.h>
-#include <maya/MDagModifier.h>
 #include <maya/MGlobal.h>
-
-// Maya function Sets
-#include <maya/MFnDagNode.h>
 #include <maya/MFnMesh.h>
-#include <maya/MFnTransform.h>
 
  
 void* MeshDissolver::creator() { return new MeshDissolver; }
@@ -40,8 +33,12 @@ MStatus MeshDissolver::doIt(const MArgList& argList) {
 
         // TODO: Curved 3D spaces requires the user to do an "Average normal"
         // in Maya to interpolate the normals. A MEL script could probably take care of this.
-        stat = collectFaceData(mdagPath, faceData);
-        if (!checkStatus(stat)) return MS::kFailure;
+        if (!collectFaceData(mdagPath, faceData)) return MS::kFailure;
+
+        // Use MEL to delete the original shape.
+        mdagPath.extendToShape();
+        MString deleteOriginalStr = "delete " + mdagPath.fullPathName();
+        MGlobal::executeCommand(deleteOriginalStr);
 
         MFnMesh surfFn;
         surfFn.create(faceData->numVertices, faceData->numPolygons, faceData->vertexArray,
@@ -56,11 +53,11 @@ MStatus MeshDissolver::doIt(const MArgList& argList) {
 /// The function handles meshes with varying number of vertices per face, e.g. spheres.
 /// 
 /// Returns MS::kSuccess if successfully executed. 
-MStatus MeshDissolver::collectFaceData(const MDagPath& mdagPath, FaceData* faceData) {
+bool MeshDissolver::collectFaceData(const MDagPath& mdagPath, FaceData* faceData) {
 
     MStatus stat;
     MItMeshPolygon faceIter(mdagPath, MObject::kNullObj, &stat);
-    if (!checkStatus(stat)) return stat;
+    if (!checkStatus(stat)) return false;
 
     int indexOffset = 0;
     int numVertices = 0;
@@ -92,9 +89,8 @@ MStatus MeshDissolver::collectFaceData(const MDagPath& mdagPath, FaceData* faceD
     faceData->numVertices = numVertices;
     faceData->numPolygons = numPolygons;
 
-    return MS::kSuccess;
+    return true;
 }
-
 bool MeshDissolver::checkStatus (const MStatus& stat) { 
     if (stat != MS::kSuccess) {
         MGlobal::displayError(stat.errorString());
@@ -102,7 +98,6 @@ bool MeshDissolver::checkStatus (const MStatus& stat) {
     }
     return true;
 }
-
 
 MStatus MeshDissolver::redoIt (){
 
@@ -112,28 +107,5 @@ MStatus MeshDissolver::redoIt (){
 }
 
 MeshDissolver::~MeshDissolver() {
-    MGlobal::displayInfo("~MeshDissolver");
     delete faceData;
-}
- 
-MStatus initializePlugin(MObject obj) {
-    MFnPlugin plugin(obj, "August Ek & Ramin Assadi", "0.1", "Any");
-    MStatus status = plugin.registerCommand("dissolve", MeshDissolver::creator);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    return status;
-}
- 
-MStatus uninitializePlugin(MObject obj) {
-    MFnPlugin plugin(obj);
-    MStatus status = plugin.deregisterCommand("dissolve");
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    return status;
-}
-
-int main(int argc, char** argv) {
-
-    if (argc != 2) return 0;
-
-    return 0;
-
 }

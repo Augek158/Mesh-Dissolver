@@ -28,7 +28,7 @@ class MeshDissolver : public MPxCommand {
  private:
  	FaceData* faceData;
  	bool checkStatus(const MStatus& stat);
- 	MStatus collectFaceData(const MDagPath& mdagPath, FaceData* faceData); 
+ 	bool collectFaceData(const MDagPath& mdagPath, FaceData* faceData); 
 
 };
 
