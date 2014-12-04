@@ -7,26 +7,28 @@
 #include <maya/MPointArray.h>
 #include <maya/MIntArray.h>
 #include <maya/MFloatArray.h>
+#include <maya/MDagPath.h>
 
-typedef struct Face {
+typedef struct FaceData {
 	int numVertices;
 	int numPolygons;
 	MFloatPointArray vertexArray;
 	MIntArray polygonCounts;
 	MIntArray polygonConnects;
-	MFloatArray uArray;
-	MFloatArray vArray;
-} Face;
+} FaceData;
 
 class MeshDissolver : public MPxCommand {
  public:
    MeshDissolver() {};
+   ~MeshDissolver();
    virtual MStatus doIt(const MArgList& argList);
    virtual MStatus redoIt();
    static void* creator();
 
  private:
+ 	FaceData* faceData;
  	bool checkStatus(const MStatus& stat);
+ 	MStatus collectFaceData(const MDagPath& mdagPath, FaceData* faceData); 
 
 };
 

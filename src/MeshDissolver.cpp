@@ -6,7 +6,6 @@
 #include <maya/MSelectionList.h>
 #include <maya/MItMeshPolygon.h>
 #include <maya/MDagModifier.h>
-#include <maya/MDagPath.h>
 #include <maya/MGlobal.h>
 
 // Maya function Sets
@@ -14,8 +13,6 @@
 #include <maya/MFnMesh.h>
 #include <maya/MFnTransform.h>
 
-// std
-#include <vector>
  
 void* MeshDissolver::creator() { return new MeshDissolver; }
  
@@ -31,63 +28,69 @@ MStatus MeshDissolver::doIt(const MArgList& argList) {
         MDagPath mdagPath;
         MObject mObject, mTransform;
 
-
         // Get DagPath of the first object.
         selection.getDagPath(0, mdagPath);
 
         // Get transform of the DagPath.
         mTransform = mdagPath.transform(&stat);
-        checkStatus(stat);
+        if (!checkStatus(stat)) return MS::kFailure;
 
-        // -------- Extract faces ----------//
+        // Allocate on heap since it is a big struct.
+        faceData = new FaceData;
 
-        MPointArray ptArray;
-        MFloatPointArray fPtArray;
-
-        // TODO: Should be able to handle [3][4] as well.
-        double dblPts[4][4];
-
-        // Create iterator
-        MItMeshPolygon faceIter(mdagPath);
-
-        // TODO: Should be able to handle [3][4] as well.
-        int arr[] = {0, 1, 2, 3};
-        MIntArray indices = MIntArray(arr, 4);
-
-        // Vector allocates on heap by default.
-        std::vector<Face> vec;
-
-        Face face;
-        for(; !faceIter.isDone(); faceIter.next()) {
-            face.numVertices = faceIter.polygonVertexCount();
-            face.numPolygons = 1;
-
-            // Get pointArray and cast it to MFloatPointArray.
-            faceIter.getPoints(ptArray);
-            ptArray.get(dblPts);
-            face.vertexArray = MFloatPointArray(dblPts, face.numVertices);
-
-            // Indices;
-            face.polygonConnects = indices;
-
-            // TODO: Should be able to handle [3][4] as well.
-            face.polygonCounts = MIntArray(1, 4);
-
-            // Texture coordinates
-            faceIter.getUVs(face.uArray, face.vArray);
-
-            vec.push_back(face);
-        }
+        // TODO: Curved 3D spaces requires the user to do an "Average normal"
+        // in Maya to interpolate the normals. A MEL script could probably take care of this.
+        stat = collectFaceData(mdagPath, faceData);
+        if (!checkStatus(stat)) return MS::kFailure;
 
         MFnMesh surfFn;
-        
-        for (std::vector<Face>::iterator it = vec.begin(); it != vec.end(); ++it) {
-            mObject = surfFn.create(it->numVertices, it->numPolygons, it->vertexArray, it->polygonCounts,
-                                    it->polygonConnects, it->uArray, it->vArray, mTransform);
+        surfFn.create(faceData->numVertices, faceData->numPolygons, faceData->vertexArray,
+                      faceData->polygonCounts, faceData->polygonConnects, mTransform);
+    }
+
+    return MS::kSuccess;
+}
+
+/// Takes an MDagPath and a FaceData* as parameter. The function uses the mesh at the
+/// MDagPath to populate the data in FaceData*.
+/// The function handles meshes with varying number of vertices per face, e.g. spheres.
+/// 
+/// Returns MS::kSuccess if successfully executed. 
+MStatus MeshDissolver::collectFaceData(const MDagPath& mdagPath, FaceData* faceData) {
+
+    MStatus stat;
+    MItMeshPolygon faceIter(mdagPath, MObject::kNullObj, &stat);
+    if (!checkStatus(stat)) return stat;
+
+    int indexOffset = 0;
+    int numVertices = 0;
+    int numPolygons = 0;
+    float fPoint[4] = {0.0, 0.0, 0.0, 0.0};
+    MPointArray pointArray;
+
+    // Loop through each face.
+    for (; !faceIter.isDone(); faceIter.next()) {
+
+        // Fetch vertices.
+        faceIter.getPoints(pointArray);
+
+        // Cast MPoint to MFloatPoint and append to array of vertices.
+        for (int i = 0; i < pointArray.length(); i++) {
+            pointArray[i].get(fPoint);
+            faceData->vertexArray.append(fPoint);
+            faceData->polygonConnects.append(indexOffset + i);
         }
 
-        // ------- Extract Faces End -------- //
+        // Set number of vertices for the face.
+        faceData->polygonCounts.append(pointArray.length());
+
+        numVertices += faceIter.polygonVertexCount();
+        numPolygons += 1;
+        indexOffset += pointArray.length();
     }
+
+    faceData->numVertices = numVertices;
+    faceData->numPolygons = numPolygons;
 
     return MS::kSuccess;
 }
@@ -100,11 +103,17 @@ bool MeshDissolver::checkStatus (const MStatus& stat) {
     return true;
 }
 
+
 MStatus MeshDissolver::redoIt (){
 
     // Do actual work here with the data from local class.
     
     return MS::kSuccess;
+}
+
+MeshDissolver::~MeshDissolver() {
+    MGlobal::displayInfo("~MeshDissolver");
+    delete faceData;
 }
  
 MStatus initializePlugin(MObject obj) {
