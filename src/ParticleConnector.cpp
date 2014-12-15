@@ -74,11 +74,9 @@ bool ParticleConnector::checkStatus (const MStatus& stat) {
 }
 
 /// Deletes the mesh connected to the dagpath by
-/// extending the dagpath to its shape, then using
-/// a MEL-command to delete it.
+/// using a MEL-command to delete it.
 MStatus ParticleConnector::deleteMesh(MDagPath& object) {
 	MStatus stat;
- 	object.extendToShape();
     MString deleteOriginalStr = "delete " + object.fullPathName();
     stat = MGlobal::executeCommand(deleteOriginalStr);
     if(!checkStatus(stat)) return MS::kFailure;
