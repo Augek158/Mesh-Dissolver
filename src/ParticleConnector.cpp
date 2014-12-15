@@ -35,8 +35,8 @@ MStatus ParticleConnector::doIt(const MArgList& argList) {
 			// Create particle system
 			MFnParticleSystem prtSystem;
 
-			// Set the was object the particleSystem should have
-			MObject particle = prtSystem.create();
+			// Create particle system with the same parent as the source mesh.
+			MObject particle = prtSystem.create(mdagPath.node());
 			prtSystem.setObject(particle);
 			
 			// Emit all particles
@@ -77,7 +77,9 @@ bool ParticleConnector::checkStatus (const MStatus& stat) {
 /// using a MEL-command to delete it.
 MStatus ParticleConnector::deleteMesh(MDagPath& object) {
 	MStatus stat;
+	object.extendToShapeDirectlyBelow(0);
     MString deleteOriginalStr = "delete " + object.fullPathName();
+    // MGlobal::displayInfo(object.node().apiTypeStr());
     stat = MGlobal::executeCommand(deleteOriginalStr);
     if(!checkStatus(stat)) return MS::kFailure;
     return MS::kSuccess;
