@@ -1,9 +1,12 @@
 #include "ParticleConnector.h"
-#include <maya/MTypes.h>
 #include <maya/MGlobal.h>
 #include <maya/MDagPath.h>
 #include <maya/MSelectionList.h>
 #include <maya/MItMeshVertex.h>
+#include <maya/MFnParticleSystem.h>
+#include <maya/MVector.h>
+#include <maya/MVectorArray.h>
+#include <maya/MPlug.h>
 
 ParticleConnector::ParticleConnector() {
 
@@ -15,10 +18,31 @@ ParticleConnector::~ParticleConnector() {
 
 MStatus ParticleConnector::doIt(const MArgList& argList) {
 
-	MStatus stat;
+	MStatus stat = MS::kFailure;
 	MPointArray pts;
 	stat = collectMeshData(&pts);
-	return MS::kSuccess;
+	if (checkStatus(stat)) {
+
+		// Create particle system
+		MFnParticleSystem prtSystem;
+
+		// Set the was object the particleSystem should have
+		MObject particle = prtSystem.create();
+		prtSystem.setObject(particle);
+		
+		// Emit all particles
+		prtSystem.emit(pts);
+
+		// Change the particles render type
+		MFnDependencyNode fromNode(particle);
+		MPlug plug = fromNode.findPlug("particleRenderType");
+		plug.setValue(SPHERES);
+
+		// Save state so the particles do not disappear
+		prtSystem.saveInitialState();
+		stat = MS::kSuccess;
+	}
+	return stat;
 }
 
 

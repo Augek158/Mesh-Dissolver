@@ -25,7 +25,7 @@ if (APPLE)
 	add_executable(MeshDissolver.${BIN_EXT} ${SRC_FILES})
 	
 	# The libraries for linking.
-	set(LIBS libOpenMaya.${LIB_EXT} libFoundation.${LIB_EXT})
+	set(LIBS libOpenMaya.${LIB_EXT} libFoundation.${LIB_EXT} libOpenMayaFX.${LIB_EXT})
 
 	# Add header file
 	target_link_libraries(MeshDissolver.${BIN_EXT} ${LIBS})
@@ -34,7 +34,9 @@ endif (APPLE)
 
 if (WIN32)
 	set(SOURCES
-   	"C:/Users/Ramin Assadi/Desktop/Mesh-Dissolver/src/MeshDissolver.cpp"
+   	"main.cpp"
+	"MeshDissolver.cpp"
+	"ParticleConnector.cpp"
 	)
 
 	# Path to the maya includes.
@@ -64,7 +66,7 @@ if (WIN32)
 				"/dll /export:initializePlugin /export:uninitializePlugin" )	
 	
 	# The libraries for linking.
-	set(LIBS OpenMaya.${LIB_EXT} Foundation.${LIB_EXT})
+	set(LIBS OpenMaya.${LIB_EXT} Foundation.${LIB_EXT} OpenMayaAnim.${LIB_EXT} OpenMayaUI.${LIB_EXT} OpenMayaFX.${LIB_EXT})
 	
 	# Add header file
 	target_link_libraries(MeshDissolver ${LIBS})

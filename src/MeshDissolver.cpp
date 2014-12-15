@@ -10,6 +10,8 @@
 #include <maya/MItSelectionList.h>
 #include <maya/MVector.h>
 #include <maya/MGlobal.h>
+#include <maya/MFnAnimCurve.h>
+#include <maya/MItKeyframe.h>
 
 #include <time.h>
 
@@ -54,6 +56,17 @@ MStatus MeshDissolver::doIt(const MArgList& argList) {
         MFnMesh surfFn;
         surfFn.create(faceData->numVertices, faceData->numPolygons, faceData->vertexArray,
                       faceData->polygonCounts, faceData->polygonConnects, mTransform);
+        /*
+		MVector vector = MVector(0.0, 30.0, 0.0);
+
+        // Loop through each mesh
+        for (; !iter.isDone(); iter.next()) {
+            iter.getDagPath(mdagPath, mObject);
+
+			translateMesh(vector, mdagPath);
+			//translateFace(vector, mdagPath);
+        }
+        */
     } 
 	return MS::kSuccess;
 }
@@ -82,7 +95,7 @@ bool MeshDissolver::collectFaceData(const MDagPath& mdagPath, FaceData* faceData
         faceIter.getPoints(pointArray);
 
         // Cast MPoint to MFloatPoint and append to array of vertices.
-        for (int i = 0; i < pointArray.length(); i++) {
+        for (unsigned int i = 0; i < pointArray.length(); i++) {
             pointArray[i].get(fPoint);
             faceData->vertexArray.append(fPoint);
             faceData->polygonConnects.append(indexOffset + i);
@@ -126,15 +139,50 @@ MeshDissolver::~MeshDissolver() {
 /// Translate each mesh with specific vector
 void MeshDissolver::translateMesh(MVector vector, MDagPath mdagPath) {
 	MItMeshVertex vertexIter(mdagPath);
+	int vertIndices = 0;
+
 	for (; !vertexIter.isDone(); vertexIter.next()) {
+		// Set a keyframe at position 0 for the specified face
+		MString command1;
+		command1 += "setKeyframe -t 0 ";
+		command1 += mdagPath.fullPathName();
+		command1 += ".vtx[";
+		command1 += vertIndices;
+		command1 += "]";
+		MGlobal::executeCommand(command1);
+
 		vertexIter.translateBy(vector);
+
+		// Set a keyframe at position 300 for the specified face
+		MString command2;
+		command2 += "setKeyframe -t 200 ";
+		command2 += mdagPath.fullPathName();
+		command2 += ".vtx[";
+		command2 += vertIndices;
+		command2 += "]";
+		MGlobal::executeCommand(command2);
+
+		vertIndices++;
 	}
 }
 
 /// Translate each face with specific vector
 void MeshDissolver::translateFace(MVector vector, MDagPath mdagPath) {
 	MItMeshPolygon faceIter(mdagPath);
+	int faceIndices = 0;
+	MString command;
+
 	for (; !faceIter.isDone(); faceIter.next()) {
+		// Set a keyframe at position 0 for the specified face
+		command = "";
+		command += "setKeyframe -t 0";
+		command += mdagPath.fullPathName();
+		command += ".f[";
+		command += faceIndices;
+		command += "]";
+		MGlobal::executeCommand(command);
+
+		// Translate the face with the specified vector
 		MPointArray pointArray;
 		faceIter.getPoints(pointArray);
 		for (unsigned int i = 0; i < pointArray.length(); i++) {
@@ -144,5 +192,16 @@ void MeshDissolver::translateFace(MVector vector, MDagPath mdagPath) {
 		}
 		faceIter.setPoints(pointArray);
 		faceIter.updateSurface();
+		
+		// Set a keyframe at position 300 for the specified face
+		command = "";
+		command += "setKeyframe -t 200";
+		command += mdagPath.fullPathName();
+		command += ".f[";
+		command += faceIndices;
+		command += "]";
+		MGlobal::executeCommand(command);
+		
+		faceIndices++;
 	}
 }

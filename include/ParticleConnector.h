@@ -5,6 +5,19 @@
 #include <maya/MPxCommand.h>
 #include <maya/MPointArray.h>
 
+enum ParticleTypes {
+	MULTIPOINT,
+	MULTISTREAK,
+	NUMERICS,
+	POINTSS,
+	SPHERES,
+	SPRITES,
+	STREAKS,
+	BLOBBYSURFACES,
+	CLOUD,
+	TUBE
+};
+
 class ParticleConnector : public MPxCommand {
   public:
     ParticleConnector();
