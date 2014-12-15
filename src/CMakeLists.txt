@@ -36,6 +36,7 @@ if (WIN32)
 	set(SOURCES
    	"main.cpp"
 	"MeshDissolver.cpp"
+	"ParticleConnector.cpp"
 	)
 
 	# Path to the maya includes.
@@ -65,7 +66,7 @@ if (WIN32)
 				"/dll /export:initializePlugin /export:uninitializePlugin" )	
 	
 	# The libraries for linking.
-	set(LIBS OpenMaya.${LIB_EXT} Foundation.${LIB_EXT} OpenMayaAnim.${LIB_EXT} OpenMayaUI.${LIB_EXT})
+	set(LIBS OpenMaya.${LIB_EXT} Foundation.${LIB_EXT} OpenMayaAnim.${LIB_EXT} OpenMayaUI.${LIB_EXT} OpenMayaFX.${LIB_EXT})
 	
 	# Add header file
 	target_link_libraries(MeshDissolver ${LIBS})
