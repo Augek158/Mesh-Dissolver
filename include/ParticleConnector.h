@@ -3,6 +3,7 @@
  
 #include <maya/MArgList.h>
 #include <maya/MPxCommand.h>
+#include <maya/MPointArray.h>
 
 class ParticleConnector : public MPxCommand {
   public:
@@ -13,6 +14,8 @@ class ParticleConnector : public MPxCommand {
     static void* creator();
    
   private:
+  	MStatus collectMeshData(MPointArray* dest);
+  	bool checkStatus(const MStatus& stat);
 
 };
 

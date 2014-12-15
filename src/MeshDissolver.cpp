@@ -21,7 +21,6 @@ void* MeshDissolver::creator() { return new MeshDissolver; }
  
 MStatus MeshDissolver::doIt(const MArgList& argList) {
 	
-	clock_t t = clock();
     MStatus stat;
 
 	// Get current selection
@@ -55,23 +54,7 @@ MStatus MeshDissolver::doIt(const MArgList& argList) {
         MFnMesh surfFn;
         surfFn.create(faceData->numVertices, faceData->numPolygons, faceData->vertexArray,
                       faceData->polygonCounts, faceData->polygonConnects, mTransform);
-        /*
-		MVector vector = MVector(0.0, 30.0, 0.0);
-
-        // Loop through each mesh
-        for (; !iter.isDone(); iter.next()) {
-            iter.getDagPath(mdagPath, mObject);
-
-			translateMesh(vector, mdagPath);
-			//translateFace(vector, mdagPath);
-        }
-        */
     } 
-
-	// How long did the calculation take?
-	t = clock() - t;
-	cout << ((float)t) / CLOCKS_PER_SEC << endl;
-    
 	return MS::kSuccess;
 }
 
