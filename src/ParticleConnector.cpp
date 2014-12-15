@@ -1,11 +1,9 @@
 #include "ParticleConnector.h"
 #include <maya/MGlobal.h>
-#include <maya/MDagPath.h>
 #include <maya/MSelectionList.h>
 #include <maya/MItMeshVertex.h>
+#include <maya/MItSelectionList.h>
 #include <maya/MFnParticleSystem.h>
-#include <maya/MVector.h>
-#include <maya/MVectorArray.h>
 #include <maya/MPlug.h>
 
 ParticleConnector::ParticleConnector() {
@@ -19,28 +17,41 @@ ParticleConnector::~ParticleConnector() {
 MStatus ParticleConnector::doIt(const MArgList& argList) {
 
 	MStatus stat = MS::kFailure;
-	MPointArray pts;
-	stat = collectMeshData(&pts);
-	if (checkStatus(stat)) {
 
-		// Create particle system
-		MFnParticleSystem prtSystem;
+	// Create iterator on selection. 
+	MSelectionList selection;
+    MGlobal::getActiveSelectionList(selection);
+    MItSelectionList iter(selection);
 
-		// Set the was object the particleSystem should have
-		MObject particle = prtSystem.create();
-		prtSystem.setObject(particle);
-		
-		// Emit all particles
-		prtSystem.emit(pts);
+    // Iterate through selected meshes and convert to particles.
+    for (; !iter.isDone(); iter.next()) {
+    	MDagPath mdagPath;
+    	MPointArray pts;
+    	iter.getDagPath(mdagPath);
+    	stat = collectMeshData(mdagPath, &pts);
 
-		// Change the particles render type
-		MFnDependencyNode fromNode(particle);
-		MPlug plug = fromNode.findPlug("particleRenderType");
-		plug.setValue(SPHERES);
+		if (checkStatus(stat)) {
 
-		// Save state so the particles do not disappear
-		prtSystem.saveInitialState();
-		stat = MS::kSuccess;
+			// Create particle system
+			MFnParticleSystem prtSystem;
+
+			// Set the was object the particleSystem should have
+			MObject particle = prtSystem.create();
+			prtSystem.setObject(particle);
+			
+			// Emit all particles
+			prtSystem.emit(pts);
+
+			// Change the particles render type
+			MFnDependencyNode fromNode(particle);
+			MPlug plug = fromNode.findPlug("particleRenderType");
+			plug.setValue(SPHERES);
+
+			// Save state so the particles do not disappear
+			prtSystem.saveInitialState();
+			stat = deleteMesh(mdagPath);
+			if(!checkStatus(stat)) break;
+		}		
 	}
 	return stat;
 }
@@ -62,21 +73,27 @@ bool ParticleConnector::checkStatus (const MStatus& stat) {
     return true;
 }
 
+/// Deletes the mesh connected to the dagpath by
+/// extending the dagpath to its shape, then using
+/// a MEL-command to delete it.
+MStatus ParticleConnector::deleteMesh(MDagPath& object) {
+	MStatus stat;
+ 	object.extendToShape();
+    MString deleteOriginalStr = "delete " + object.fullPathName();
+    stat = MGlobal::executeCommand(deleteOriginalStr);
+    if(!checkStatus(stat)) return MS::kFailure;
+    return MS::kSuccess;
+}
+
+
+
 /// Collects the positions for the selected mesh and stores
 /// it in the given MPointArray.
-MStatus ParticleConnector::collectMeshData(MPointArray* dest) {
+MStatus ParticleConnector::collectMeshData(const MDagPath& mdagPath, MPointArray* dest) {
 	MStatus stat;
-	MDagPath mdagPath;
     MPoint pt;
 
-	// Get mesh from selection
-	MSelectionList selection;
-    MGlobal::getActiveSelectionList(selection);
-
-    // Get DagPath of the first object.
-    selection.getDagPath(0, mdagPath);
-
-    // Create iterator on the current dagpath
+    // Create iterator on the current dagpath.
     MItMeshVertex vertIter(mdagPath, MObject::kNullObj, &stat);
     if(!checkStatus(stat)) return MS::kFailure;
 

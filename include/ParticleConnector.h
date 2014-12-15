@@ -4,6 +4,7 @@
 #include <maya/MArgList.h>
 #include <maya/MPxCommand.h>
 #include <maya/MPointArray.h>
+#include <maya/MDagPath.h>
 
 enum ParticleTypes {
 	MULTIPOINT,
@@ -27,7 +28,8 @@ class ParticleConnector : public MPxCommand {
     static void* creator();
    
   private:
-  	MStatus collectMeshData(MPointArray* dest);
+  	MStatus collectMeshData(const MDagPath& mdagPath, MPointArray* dest);
+  	MStatus deleteMesh(MDagPath& object);
   	bool checkStatus(const MStatus& stat);
 
 };
