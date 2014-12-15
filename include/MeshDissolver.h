@@ -24,8 +24,6 @@ class MeshDissolver : public MPxCommand {
    virtual MStatus doIt(const MArgList& argList);
    virtual MStatus redoIt();
    static void* creator();
-
-
  private:
  	FaceData* faceData;
  	bool checkStatus(const MStatus& stat);

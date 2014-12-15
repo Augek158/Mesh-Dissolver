@@ -31,7 +31,8 @@ endif (APPLE)
 
 if (WIN32)
 	set(SOURCES
-   	"C:/Users/Ramin Assadi/Desktop/Mesh-Dissolver/src/MeshDissolver.cpp"
+   	"C:/Users/Ramin Assadi/Desktop/Mesh-Dissolver/src/main.cpp"
+	"C:/Users/Ramin Assadi/Desktop/Mesh-Dissolver/src/MeshDissolver.cpp"
 	)
 
 	# Path to the maya includes.

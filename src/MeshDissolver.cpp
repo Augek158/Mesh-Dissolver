@@ -53,27 +53,23 @@ MStatus MeshDissolver::doIt(const MArgList& argList) {
         MFnMesh surfFn;
         surfFn.create(faceData->numVertices, faceData->numPolygons, faceData->vertexArray,
                       faceData->polygonCounts, faceData->polygonConnects, mTransform);
-        /*
-        MDagPath mdagPath; 
-        MObject mComponent;
-		MVector vector = MVector(0.0, 10.0, 0.0);
+        
 
-		MObject curve;
-		MFnAnimCurve fnCurve(curve);
-		MItKeyframe kIt(curve);
+  //      MObject mComponent;
+		//MVector vector = MVector(0.0, 10.0, 0.0);
 
-		// Loop through each mesh
-		for (; !iter.isDone(); iter.next()) {
-			iter.getDagPath(mdagPath, mComponent);
+		//MObject curve;
+		//MFnAnimCurve fnCurve(curve);
+		//MItKeyframe kIt(curve);
 
-			while(!kIt.isDone()) {
-				cout << "hej" << endl;
-			}
+		//// Loop through each mesh
+		//for (; !iter.isDone(); iter.next()) {
+		//	iter.getDagPath(mdagPath, mComponent);
 
-			translateMesh(vector, mdagPath);
-			//translateFace(vector, mdagPath);			
-        }
-        */
+		//	translateMesh(vector, mdagPath);
+		//	//translateFace(vector, mdagPath);			
+  //      }
+        
         
     } 
 
@@ -108,7 +104,7 @@ bool MeshDissolver::collectFaceData(const MDagPath& mdagPath, FaceData* faceData
         faceIter.getPoints(pointArray);
 
         // Cast MPoint to MFloatPoint and append to array of vertices.
-        for (int i = 0; i < pointArray.length(); i++) {
+        for (unsigned int i = 0; i < pointArray.length(); i++) {
             pointArray[i].get(fPoint);
             faceData->vertexArray.append(fPoint);
             faceData->polygonConnects.append(indexOffset + i);
@@ -142,7 +138,7 @@ MStatus MeshDissolver::redoIt (){
 }
 
 MeshDissolver::~MeshDissolver() {
-    delete faceData;
+    //delete faceData;
 }
 
 
