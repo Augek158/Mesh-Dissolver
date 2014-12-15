@@ -14,6 +14,10 @@
 #include <maya/MItKeyframe.h>
 
 #include <time.h>
+
+MeshDissolver::MeshDissolver() {
+    faceData = NULL; 
+}
  
 void* MeshDissolver::creator() { return new MeshDissolver; }
  
@@ -53,24 +57,18 @@ MStatus MeshDissolver::doIt(const MArgList& argList) {
         MFnMesh surfFn;
         surfFn.create(faceData->numVertices, faceData->numPolygons, faceData->vertexArray,
                       faceData->polygonCounts, faceData->polygonConnects, mTransform);
-        
 
-  //      MObject mComponent;
-		//MVector vector = MVector(0.0, 10.0, 0.0);
+        /*
+		MVector vector = MVector(0.0, 30.0, 0.0);
 
-		//MObject curve;
-		//MFnAnimCurve fnCurve(curve);
-		//MItKeyframe kIt(curve);
+        // Loop through each mesh
+        for (; !iter.isDone(); iter.next()) {
+            iter.getDagPath(mdagPath, mObject);
 
-		//// Loop through each mesh
-		//for (; !iter.isDone(); iter.next()) {
-		//	iter.getDagPath(mdagPath, mComponent);
-
-		//	translateMesh(vector, mdagPath);
-		//	//translateFace(vector, mdagPath);			
-  //      }
-        
-        
+			translateMesh(vector, mdagPath);
+			//translateFace(vector, mdagPath);
+        }
+        */
     } 
 
 	// How long did the calculation take?
@@ -123,6 +121,7 @@ bool MeshDissolver::collectFaceData(const MDagPath& mdagPath, FaceData* faceData
 
     return true;
 }
+
 bool MeshDissolver::checkStatus (const MStatus& stat) { 
     if (stat != MS::kSuccess) {
         MGlobal::displayError(stat.errorString());
@@ -138,7 +137,9 @@ MStatus MeshDissolver::redoIt (){
 }
 
 MeshDissolver::~MeshDissolver() {
-    //delete faceData;
+    if (faceData != NULL) {
+        delete faceData;    
+    }
 }
 
 

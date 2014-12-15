@@ -16,10 +16,13 @@ if (APPLE)
 	include_directories(${MeshDissolver_SOURCE_DIR}/include : ${MAYA_INCLUDE_PATH})
 	link_directories(${MAYA_LIBRARY_PATH})
 
+	# Find source files
+	file (GLOB SRC_FILES "*.cpp")
+
 	# Compiler flags
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DREQUIRE_IOSTREAM -include '${MAYA_INCLUDE_PATH}/maya/OpenMayaMac.h' ")
 	
-	add_executable(MeshDissolver.${BIN_EXT} main.cpp MeshDissolver.cpp)
+	add_executable(MeshDissolver.${BIN_EXT} ${SRC_FILES})
 	
 	# The libraries for linking.
 	set(LIBS libOpenMaya.${LIB_EXT} libFoundation.${LIB_EXT})
@@ -31,8 +34,8 @@ endif (APPLE)
 
 if (WIN32)
 	set(SOURCES
-   	"C:/Users/Ramin Assadi/Desktop/Mesh-Dissolver/src/main.cpp"
-	"C:/Users/Ramin Assadi/Desktop/Mesh-Dissolver/src/MeshDissolver.cpp"
+   	"main.cpp"
+	"MeshDissolver.cpp"
 	)
 
 	# Path to the maya includes.
