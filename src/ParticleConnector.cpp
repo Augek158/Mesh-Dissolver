@@ -5,6 +5,7 @@
 #include <maya/MItSelectionList.h>
 #include <maya/MFnParticleSystem.h>
 #include <maya/MPlug.h>
+#include <maya/MFnTransform.h>
 
 ParticleConnector::ParticleConnector() {
 
@@ -22,23 +23,40 @@ MStatus ParticleConnector::doIt(const MArgList& argList) {
 	MSelectionList selection;
     MGlobal::getActiveSelectionList(selection);
     MItSelectionList iter(selection);
+    
 
     // Iterate through selected meshes and convert to particles.
     for (; !iter.isDone(); iter.next()) {
-    	MDagPath mdagPath;
+    	MDagPath mdagPath, particleDag;
     	MPointArray pts;
     	iter.getDagPath(mdagPath);
     	stat = collectMeshData(mdagPath, &pts);
 
+    	// Get the transformation matrix of the parent.
+    	MFnTransform transformFn(mdagPath.node());
+    	MTransformationMatrix parentTransform = transformFn.transformation(&stat);
+
 		if (checkStatus(stat)) {
 
 			// Create particle system
-			MFnParticleSystem prtSystem;
-
-			// Create particle system with the same parent as the source mesh.
-			MObject particle = prtSystem.create(mdagPath.node());
+			MFnParticleSystem prtSystem(mdagPath);
+			MObject particle = prtSystem.create();
 			prtSystem.setObject(particle);
-			
+
+			// Create function set to manipulate dagNode of the particlesystem.
+			MFnDagNode fnDagNode(particle);
+
+			if (fnDagNode.parentCount() > 0) {
+				// Sets the transformation to the one of its parent.
+				// We can't explicitly set it in the MFnParticleSystem.create() method since
+				// some attributes essential for the particle system are lost. 
+				MObject parent = fnDagNode.parent(0);
+				if (parent.apiType() == MFn::kTransform) {
+					MFnTransform parentFn(parent);
+					parentFn.set(parentTransform);
+				}
+			}
+
 			// Emit all particles
 			prtSystem.emit(pts);
 
@@ -65,6 +83,7 @@ void* ParticleConnector::creator() {
 	return new ParticleConnector;
 }
 
+/// Utility function to check if a status is ok.
 bool ParticleConnector::checkStatus (const MStatus& stat) { 
     if (stat != MS::kSuccess) {
         MGlobal::displayError(stat.errorString());
@@ -77,9 +96,7 @@ bool ParticleConnector::checkStatus (const MStatus& stat) {
 /// using a MEL-command to delete it.
 MStatus ParticleConnector::deleteMesh(MDagPath& object) {
 	MStatus stat;
-	object.extendToShapeDirectlyBelow(0);
     MString deleteOriginalStr = "delete " + object.fullPathName();
-    // MGlobal::displayInfo(object.node().apiTypeStr());
     stat = MGlobal::executeCommand(deleteOriginalStr);
     if(!checkStatus(stat)) return MS::kFailure;
     return MS::kSuccess;
