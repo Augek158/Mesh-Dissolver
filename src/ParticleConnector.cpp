@@ -6,6 +6,7 @@
 #include <maya/MFnParticleSystem.h>
 #include <maya/MPlug.h>
 #include <maya/MFnTransform.h>
+#include <sstream>
 
 ParticleConnector::ParticleConnector() {
 
@@ -23,17 +24,89 @@ MStatus ParticleConnector::doIt(const MArgList& argList) {
 	MSelectionList selection;
     MGlobal::getActiveSelectionList(selection);
     MItSelectionList iter(selection);
-    
 
     // Iterate through selected meshes and convert to particles.
     for (; !iter.isDone(); iter.next()) {
-    	MDagPath mdagPath, particleDag;
+    	MDagPath mdagPath;
     	MPointArray pts;
+    	
     	iter.getDagPath(mdagPath);
+
+    	// Collect vertex position data.
     	stat = collectMeshData(mdagPath, &pts);
 
-    	// Get the transformation matrix of the parent.
-    	MFnTransform transformFn(mdagPath.node());
+    	if (checkStatus(stat)) {
+    		// Look for flags.
+    		int flagIndex = argList.flagIndex("n", "nParticle");
+
+    		// If flag is found, create nParticles, otherwise create standard particles.
+    		if (flagIndex != -1) {
+    			createNClothParticles(pts);
+    		} else {
+    			stat = createParticles(pts, mdagPath);
+    		}
+
+    		// Delete the original mesh.
+    		deleteMesh(mdagPath);
+    	} 
+	}
+	return stat;
+}
+
+
+MStatus ParticleConnector::redoIt() {
+	return MS::kSuccess;
+}
+
+void* ParticleConnector::creator() {
+	return new ParticleConnector;
+}
+
+MStatus ParticleConnector::collectMeshData(const MDagPath& mdagPath, MPointArray* dest) {
+	MStatus stat;
+	MPoint pt;
+	MItMeshVertex vertIter(mdagPath, MObject::kNullObj, &stat);
+	if(!checkStatus(stat)) return MS::kFailure;
+
+	 for (; !vertIter.isDone(); vertIter.next()) {
+    	pt = vertIter.position(MSpace::kWorld);
+    	dest->append(pt);
+    }
+    return MS::kSuccess;
+}
+
+std::string ParticleConnector::buildVerticePositionString(const MPointArray& pts, MStatus* stat) {
+    MPoint pt;
+    int count = 0;
+    std::stringstream ss;
+    ss << "[";	
+    for (int i = 0, len = pts.length(); i < len; i++) {
+    	pt = pts[i];
+    	ss << "(" << pt[0] << ", " << pt[1] << ", " << pt[2] << ")";
+		if(count < len - 1) {
+			ss << ", ";
+		} 
+    	count++;
+    }
+    ss << "]";
+	return ss.str();
+}
+
+void ParticleConnector::createNClothParticles(const MPointArray& pts) {
+		std::stringstream ss;
+
+		// Concatenate the string. 
+		ss << "cmds.nParticle( p=" << buildVerticePositionString(pts) << ")";
+		std::string pystring = ss.str();
+
+		// Cast to MString and execute on idle.
+		MString commandToExecute(pystring.c_str());
+		MGlobal::executePythonCommandOnIdle(commandToExecute);	
+}
+
+MStatus ParticleConnector::createParticles(const MPointArray& pts, MDagPath& mdagPath) {
+		MStatus stat;
+		MFnTransform transformFn(mdagPath.node());
     	MTransformationMatrix parentTransform = transformFn.transformation(&stat);
 
 		if (checkStatus(stat)) {
@@ -67,33 +140,12 @@ MStatus ParticleConnector::doIt(const MArgList& argList) {
 
 			// Save state so the particles do not disappear
 			prtSystem.saveInitialState();
-			stat = deleteMesh(mdagPath);
-			if(!checkStatus(stat)) break;
-		}		
-	}
-	return stat;
+			return MS::kSuccess;
+		} else {
+			return MS::kFailure;
+		}
 }
 
-
-MStatus ParticleConnector::redoIt() {
-	return MS::kSuccess;
-}
-
-void* ParticleConnector::creator() {
-	return new ParticleConnector;
-}
-
-/// Utility function to check if a status is ok.
-bool ParticleConnector::checkStatus (const MStatus& stat) { 
-    if (stat != MS::kSuccess) {
-        MGlobal::displayError(stat.errorString());
-        return false;
-    }
-    return true;
-}
-
-/// Deletes the mesh connected to the dagpath by
-/// using a MEL-command to delete it.
 MStatus ParticleConnector::deleteMesh(MDagPath& object) {
 	MStatus stat;
     MString deleteOriginalStr = "delete " + object.fullPathName();
@@ -102,22 +154,10 @@ MStatus ParticleConnector::deleteMesh(MDagPath& object) {
     return MS::kSuccess;
 }
 
-
-
-/// Collects the positions for the selected mesh and stores
-/// it in the given MPointArray.
-MStatus ParticleConnector::collectMeshData(const MDagPath& mdagPath, MPointArray* dest) {
-	MStatus stat;
-    MPoint pt;
-
-    // Create iterator on the current dagpath.
-    MItMeshVertex vertIter(mdagPath, MObject::kNullObj, &stat);
-    if(!checkStatus(stat)) return MS::kFailure;
-
-    // Iterate through vertices and append their positions to dest.
-    for (; !vertIter.isDone(); vertIter.next()) {
-    	pt = vertIter.position(MSpace::kWorld, &stat);
-    	dest->append(pt);
+bool ParticleConnector::checkStatus(const MStatus& stat) { 
+    if (stat != MS::kSuccess) {
+        MGlobal::displayError(stat.errorString());
+        return false;
     }
-	return MS::kSuccess;
+    return true;
 }
