@@ -1,4 +1,4 @@
-#include "MeshDissolver.h"
+#include "ExtractFaceCommand.h"
 
 #include <maya/MArgList.h>
 #include <maya/MSelectionList.h>
@@ -15,15 +15,16 @@
 
 #include <time.h>
 
-MeshDissolver::MeshDissolver() {
-    faceData = NULL; 
+ExtractFaceCommand::ExtractFaceCommand() { 
+
 }
  
-void* MeshDissolver::creator() { return new MeshDissolver; }
+void* ExtractFaceCommand::creator() { return new ExtractFaceCommand; }
  
-MStatus MeshDissolver::doIt(const MArgList& argList) {
+MStatus ExtractFaceCommand::doIt(const MArgList& argList) {
 	
     MStatus stat;
+    FaceData faceData = {};
 
 	// Get current selection
     MSelectionList selection;
@@ -41,12 +42,9 @@ MStatus MeshDissolver::doIt(const MArgList& argList) {
         mTransform = mdagPath.transform(&stat);
         if (!checkStatus(stat)) return MS::kFailure;
 
-        // Allocate on heap since it is a big struct.
-        faceData = new FaceData;
-
         // TODO: Curved 3D spaces requires the user to do an "Average normal"
         // in Maya to interpolate the normals. A MEL script could probably take care of this.
-        if (!collectFaceData(mdagPath, faceData)) return MS::kFailure;
+        if (!collectFaceData(mdagPath, &faceData)) return MS::kFailure;
 
         // Use MEL to delete the original shape.
         mdagPath.extendToShape();
@@ -54,29 +52,13 @@ MStatus MeshDissolver::doIt(const MArgList& argList) {
         MGlobal::executeCommand(deleteOriginalStr);
 
         MFnMesh surfFn;
-        surfFn.create(faceData->numVertices, faceData->numPolygons, faceData->vertexArray,
-                      faceData->polygonCounts, faceData->polygonConnects, mTransform);
-        /*
-		MVector vector = MVector(0.0, 30.0, 0.0);
-
-        // Loop through each mesh
-        for (; !iter.isDone(); iter.next()) {
-            iter.getDagPath(mdagPath, mObject);
-
-			translateMesh(vector, mdagPath);
-			//translateFace(vector, mdagPath);
-        }
-        */
+        surfFn.create(faceData.numVertices, faceData.numPolygons, faceData.vertexArray,
+                      faceData.polygonCounts, faceData.polygonConnects, mTransform);
     } 
 	return MS::kSuccess;
 }
 
-/// Takes an MDagPath and a FaceData* as parameter. The function uses the mesh at the
-/// MDagPath to populate the data in FaceData*.
-/// The function handles meshes with varying number of vertices per face, e.g. spheres.
-/// 
-/// Returns MS::kSuccess if successfully executed. 
-bool MeshDissolver::collectFaceData(const MDagPath& mdagPath, FaceData* faceData) {
+bool ExtractFaceCommand::collectFaceData(const MDagPath& mdagPath, FaceData* faceData) {
 
     MStatus stat;
     MItMeshPolygon faceIter(mdagPath, MObject::kNullObj, &stat);
@@ -115,29 +97,7 @@ bool MeshDissolver::collectFaceData(const MDagPath& mdagPath, FaceData* faceData
     return true;
 }
 
-bool MeshDissolver::checkStatus (const MStatus& stat) { 
-    if (stat != MS::kSuccess) {
-        MGlobal::displayError(stat.errorString());
-        return false;
-    }
-    return true;
-}
-
-MStatus MeshDissolver::redoIt (){
-
-    // Do actual work here with the data from local class.
-    return MS::kSuccess;
-}
-
-MeshDissolver::~MeshDissolver() {
-    if (faceData != NULL) {
-        delete faceData;    
-    }
-}
-
-
-/// Translate each mesh with specific vector
-void MeshDissolver::translateMesh(MVector vector, MDagPath mdagPath) {
+void ExtractFaceCommand::translateMesh(MVector vector, MDagPath mdagPath) {
 	MItMeshVertex vertexIter(mdagPath);
 	int vertIndices = 0;
 
@@ -166,8 +126,7 @@ void MeshDissolver::translateMesh(MVector vector, MDagPath mdagPath) {
 	}
 }
 
-/// Translate each face with specific vector
-void MeshDissolver::translateFace(MVector vector, MDagPath mdagPath) {
+void ExtractFaceCommand::translateFace(MVector vector, MDagPath mdagPath) {
 	MItMeshPolygon faceIter(mdagPath);
 	int faceIndices = 0;
 	MString command;
@@ -204,4 +163,12 @@ void MeshDissolver::translateFace(MVector vector, MDagPath mdagPath) {
 		
 		faceIndices++;
 	}
+}
+
+bool ExtractFaceCommand::checkStatus (const MStatus& stat) { 
+    if (stat != MS::kSuccess) {
+        MGlobal::displayError(stat.errorString());
+        return false;
+    }
+    return true;
 }

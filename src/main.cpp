@@ -1,14 +1,14 @@
-#include "MeshDissolver.h"
-#include "ParticleConnector.h"
+#include "GenerateParticleCommand.h"
+#include "ExtractFaceCommand.h"
 #include <maya/MFnPlugin.h>
 
 MStatus initializePlugin(MObject obj) {
-    MFnPlugin plugin(obj, "August Ek & Ramin Assadi", "0.2", "Any");
+    MFnPlugin plugin(obj, "August Ek & Ramin Assadi", "1.0", "Any");
 
-    MStatus status = plugin.registerCommand("dissolve", MeshDissolver::creator); 
+    MStatus status = plugin.registerCommand("extract", ExtractFaceCommand::creator); 
     CHECK_MSTATUS_AND_RETURN_IT(status);
     
-    status = plugin.registerCommand("connect", ParticleConnector::creator); 
+    status = plugin.registerCommand("mesh2particle", GenerateParticleCommand::creator); 
     CHECK_MSTATUS_AND_RETURN_IT(status);
     return status;
 }
@@ -16,10 +16,10 @@ MStatus initializePlugin(MObject obj) {
 MStatus uninitializePlugin(MObject obj) {
     MFnPlugin plugin(obj);
 
-    MStatus status = plugin.deregisterCommand("dissolve");
+    MStatus status = plugin.deregisterCommand("extract");
     CHECK_MSTATUS_AND_RETURN_IT(status);
 
-    status = plugin.deregisterCommand("connect");
+    status = plugin.deregisterCommand("mesh2particle");
     CHECK_MSTATUS_AND_RETURN_IT(status);
     return status;
 }

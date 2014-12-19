@@ -1,5 +1,5 @@
-#ifndef PARTICLE_CONNECTOR_H
-#define PARTICLE_CONNECTOR_H
+#ifndef GENERATE_PARTICLE_COMMAND_H
+#define GENERATE_PARTICLE_COMMAND_H
  
 #include <maya/MArgList.h>
 #include <maya/MPxCommand.h>
@@ -21,10 +21,10 @@ enum ParticleTypes {
 	TUBE
 };
 
-class ParticleConnector : public MPxCommand {
+class GenerateParticleCommand : public MPxCommand {
   public:
-    ParticleConnector();
-    ~ParticleConnector();
+    GenerateParticleCommand();
+    ~GenerateParticleCommand();
     virtual MStatus doIt(const MArgList& argList);
     virtual MStatus redoIt();
     static void* creator();
@@ -52,4 +52,4 @@ class ParticleConnector : public MPxCommand {
 
 };
 
-#endif // PARTICLE_CONNECTOR_H
+#endif // GENERATE_PARTICLE_COMMAND_H

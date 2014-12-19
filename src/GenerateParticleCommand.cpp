@@ -1,4 +1,4 @@
-#include "ParticleConnector.h"
+#include "GenerateParticleCommand.h"
 #include <maya/MGlobal.h>
 #include <maya/MSelectionList.h>
 #include <maya/MItMeshVertex.h>
@@ -8,15 +8,15 @@
 #include <maya/MFnTransform.h>
 #include <sstream>
 
-ParticleConnector::ParticleConnector() {
+GenerateParticleCommand::GenerateParticleCommand() {
 
 }
 
-ParticleConnector::~ParticleConnector() {
+GenerateParticleCommand::~GenerateParticleCommand() {
 
 }
 
-MStatus ParticleConnector::doIt(const MArgList& argList) {
+MStatus GenerateParticleCommand::doIt(const MArgList& argList) {
 
 	MStatus stat = MS::kFailure;
 
@@ -54,15 +54,15 @@ MStatus ParticleConnector::doIt(const MArgList& argList) {
 }
 
 
-MStatus ParticleConnector::redoIt() {
+MStatus GenerateParticleCommand::redoIt() {
 	return MS::kSuccess;
 }
 
-void* ParticleConnector::creator() {
-	return new ParticleConnector;
+void* GenerateParticleCommand::creator() {
+	return new GenerateParticleCommand;
 }
 
-MStatus ParticleConnector::collectMeshData(const MDagPath& mdagPath, MPointArray* dest) {
+MStatus GenerateParticleCommand::collectMeshData(const MDagPath& mdagPath, MPointArray* dest) {
 	MStatus stat;
 	MPoint pt;
 	MItMeshVertex vertIter(mdagPath, MObject::kNullObj, &stat);
@@ -75,7 +75,7 @@ MStatus ParticleConnector::collectMeshData(const MDagPath& mdagPath, MPointArray
     return MS::kSuccess;
 }
 
-std::string ParticleConnector::buildVerticePositionString(const MPointArray& pts, MStatus* stat) {
+std::string GenerateParticleCommand::buildVerticePositionString(const MPointArray& pts, MStatus* stat) {
     MPoint pt;
     int count = 0;
     std::stringstream ss;
@@ -92,7 +92,7 @@ std::string ParticleConnector::buildVerticePositionString(const MPointArray& pts
 	return ss.str();
 }
 
-void ParticleConnector::createNClothParticles(const MPointArray& pts) {
+void GenerateParticleCommand::createNClothParticles(const MPointArray& pts) {
 		std::stringstream ss;
 
 		// Concatenate the string. 
@@ -104,14 +104,14 @@ void ParticleConnector::createNClothParticles(const MPointArray& pts) {
 		MGlobal::executePythonCommandOnIdle(commandToExecute);	
 }
 
-MStatus ParticleConnector::createParticles(const MPointArray& pts, MDagPath& mdagPath) {
+MStatus GenerateParticleCommand::createParticles(const MPointArray& pts, MDagPath& mdagPath) {
 		MStatus stat;
 		MFnTransform transformFn(mdagPath.node());
     	MTransformationMatrix parentTransform = transformFn.transformation(&stat);
 
 		if (checkStatus(stat)) {
 
-			// Create particle system
+			// Create particle prtSystemm
 			MFnParticleSystem prtSystem(mdagPath);
 			MObject particle = prtSystem.create();
 			prtSystem.setObject(particle);
@@ -146,7 +146,7 @@ MStatus ParticleConnector::createParticles(const MPointArray& pts, MDagPath& mda
 		}
 }
 
-MStatus ParticleConnector::deleteMesh(MDagPath& object) {
+MStatus GenerateParticleCommand::deleteMesh(MDagPath& object) {
 	MStatus stat;
     MString deleteOriginalStr = "delete " + object.fullPathName();
     stat = MGlobal::executeCommand(deleteOriginalStr);
@@ -154,7 +154,7 @@ MStatus ParticleConnector::deleteMesh(MDagPath& object) {
     return MS::kSuccess;
 }
 
-bool ParticleConnector::checkStatus(const MStatus& stat) { 
+bool GenerateParticleCommand::checkStatus(const MStatus& stat) { 
     if (stat != MS::kSuccess) {
         MGlobal::displayError(stat.errorString());
         return false;
