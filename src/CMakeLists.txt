@@ -35,8 +35,8 @@ endif (APPLE)
 if (WIN32)
 	set(SOURCES
    	"main.cpp"
-	"ExtractFaceCmd.cpp"
-	"GenerateParticleCmd.cpp"
+	"ExtractFaceCommand.cpp"
+	"GenerateParticleCommand.cpp"
 	)
 
 	# Path to the maya includes.
